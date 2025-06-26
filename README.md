@@ -1,4 +1,4 @@
-# CaO2
+# CaO<sub>2</sub>
 Official repository for "Rectifying Inconsistencies in Diffusion-Based Dataset Distillation". 
 
 # Update Log
