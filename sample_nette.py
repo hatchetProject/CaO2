@@ -19,43 +19,6 @@ from PIL import Image
 import sys
 import random
 
-class BufferDataset(Dataset):
-    def __init__(self, directory, transform=None):
-        """
-        Args:
-            directory (string): Directory path to the images.
-            transform (callable, optional): Optional transform to be applied on a sample.
-        """
-        self.directory = directory
-        self.transform = transform
-        self.image_paths = sorted([os.path.join(directory, fname) for fname in os.listdir(directory)],
-                                  key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
-
-    def __len__(self):
-        return len(self.image_paths)
-
-    def __getitem__(self, idx):
-        img_path = self.image_paths[idx]
-        image = Image.open(img_path).convert('RGB')
-        if self.transform:
-            image = self.transform(image)
-
-        return image
-
-def mean_flat(tensor):
-    """
-    Take the mean over all non-batch dimensions.
-    """
-    return tensor.mean(dim=list(range(1, len(tensor.shape))))
-
-def el2n_score(pred, y):
-    with torch.no_grad():
-        pred = F.softmax(pred, dim=1)
-        l2_loss = torch.nn.MSELoss(reduction='none')
-        y_hot = F.one_hot(y, num_classes=pred.shape[1])
-        el2n = torch.sqrt(l2_loss(y_hot, pred).sum(dim=1))
-    return el2n.cpu().numpy()
-
 def main(args):
     # Setup PyTorch:
     torch.manual_seed(args.seed)
