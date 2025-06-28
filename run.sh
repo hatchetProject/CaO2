@@ -11,26 +11,26 @@ SPEC=imagenet1k
 N_CLASS=1000
 
 # run sample generation
-python sample_imagenet.py --model DiT-XL/2 --arch-name "resnet18" --image-size 256 --ipc IPC --save-dir results/SPEC_IPC --spec SPEC --nclass 1000
+python sample_imagenet.py --model DiT-XL/2 --arch-name "resnet18" --image-size 256 --ipc $IPC --save-dir results/$SPEC_$IPC --spec $SPEC --nclass $N_CLASS
 
 # run evaluation: the following is for RDED evaluation process, which reproduces the paper results
 # Evaluation model type: resnet18, resnet50, resnet101
-python main_validate.py --subset "SPEC" --arch-name "resnet18" --factor 2 \
-    --num-crop 5 --mipc 300 --ipc IPC --stud-name "resnet18" --re-epochs 300 \
+python main_validate.py --subset "$SPEC" --arch-name "resnet18" --factor 2 \
+    --num-crop 5 --mipc 300 --ipc $IPC --stud-name "resnet18" --re-epochs 300 \
     --train-dir $IMAGENET_TRAIN_PATH --val-dir $IMAGENET_VAL_PATH --repeat 3 \
-    --syn-data-path results/SPEC_IPC
+    --syn-data-path results/$SPEC_$IPC
 
-python main_validate.py --subset "SPEC" --arch-name "resnet18" --factor 2 \
-    --num-crop 5 --mipc 300 --ipc IPC --stud-name "resnet50" --re-epochs 300 \
+python main_validate.py --subset "$SPEC" --arch-name "resnet18" --factor 2 \
+    --num-crop 5 --mipc 300 --ipc $IPC --stud-name "resnet50" --re-epochs 300 \
     --train-dir $IMAGENET_TRAIN_PATH --val-dir $IMAGENET_VAL_PATH --repeat 3 \
-    --syn-data-path results/SPEC_IPC
+    --syn-data-path results/$SPEC_$IPC
 
-python main_validate.py --subset "SPEC" --arch-name "resnet18" --factor 2 \
-    --num-crop 5 --mipc 300 --ipc IPC --stud-name "resnet101" --re-epochs 300 \
+python main_validate.py --subset "$SPEC" --arch-name "resnet18" --factor 2 \
+    --num-crop 5 --mipc 300 --ipc $IPC --stud-name "resnet101" --re-epochs 300 \
     --train-dir $IMAGENET_TRAIN_PATH --val-dir $IMAGENET_VAL_PATH --repeat 3 \
-    --syn-data-path results/SPEC_IPC
+    --syn-data-path results/$SPEC_$IPC
 
 
 # Regular evaluation, this example evaluates on resnet18
-python eval.py -d imagenet --imagenet_dir results/SPEC_IPC $IMAGENET_PATH \
-     -n resnet --depth 18 --nclass N_CLASS --norm_type instance --ipc IPC --tag test --slct_type random --spec SPEC --repeat 3
+python eval.py -d imagenet --imagenet_dir results/$SPEC_$IPC $IMAGENET_PATH \
+     -n resnet --depth 18 --nclass $N_CLASS --norm_type instance --ipc $IPC --tag test --slct_type random --spec $SPEC --repeat 3
