@@ -19,75 +19,6 @@ from PIL import Image
 import sys
 import random
 
-class BufferDataset(Dataset):
-    def __init__(self, directory, transform=None):
-        """
-        Args:
-            directory (string): Directory path to the images.
-            transform (callable, optional): Optional transform to be applied on a sample.
-        """
-        self.directory = directory
-        self.transform = transform
-        self.image_paths = sorted([os.path.join(directory, fname) for fname in os.listdir(directory)],
-                                  key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
-
-    def __len__(self):
-        return len(self.image_paths)
-
-    def __getitem__(self, idx):
-        img_path = self.image_paths[idx]
-        image = Image.open(img_path).convert('RGB')
-        if self.transform:
-            image = self.transform(image)
-
-        return image
-
-
-def mean_flat(tensor):
-    """
-    Take the mean over all non-batch dimensions.
-    """
-    return tensor.mean(dim=list(range(1, len(tensor.shape))))
-
-
-def el2n_score(pred, y):
-    with torch.no_grad():
-        pred = F.softmax(pred, dim=1)
-        l2_loss = torch.nn.MSELoss(reduction='none')
-        y_hot = F.one_hot(y, num_classes=pred.shape[1])
-        el2n = torch.sqrt(l2_loss(y_hot, pred).sum(dim=1))
-    return el2n.cpu().numpy()
-
-
-def mix_images(input_img, out_size, factor, n):
-    s = out_size // factor
-    remained = out_size % factor
-    k = 0
-    mixed_images = torch.zeros(
-        (n, 3, out_size, out_size),
-        requires_grad=False,
-        dtype=torch.float,
-    )
-    h_loc = 0
-    for i in range(factor):
-        h_r = s + 1 if i < remained else s
-        w_loc = 0
-        for j in range(factor):
-            w_r = s + 1 if j < remained else s
-            img_part = F.interpolate(
-                input_img.data[k * n : (k + 1) * n], size=(h_r, w_r)
-            )
-            mixed_images.data[
-                0:n,
-                :,
-                h_loc : h_loc + h_r,
-                w_loc : w_loc + w_r,
-            ] = img_part
-            w_loc += w_r
-            k += 1
-        h_loc += h_r
-    return mixed_images
-
 
 def main(args):
     # Setup PyTorch:
@@ -218,13 +149,9 @@ def main(args):
                     batch_ts = torch.tensor(np.random.choice(ts, train_size), device=device)
                     noised_latent = diffusion.q_sample(latent_.repeat(train_size, 1, 1, 1), batch_ts, noise)
                     
-                    ## True class label
-                    # uncond_input_label = torch.tensor([class_label] * len(batch_ts), device=device)
                     ## Null class label
                     uncond_input_label = torch.tensor([1000] * len(batch_ts), device=device)
-                    ## Random class label
-                    # uncond_input_label = torch.tensor([random.randint(0, 999)] * len(batch_ts), device=device)
-
+                    
                     model_output_label = model(noised_latent, batch_ts, y=uncond_input_label)
                     B, C = noised_latent.shape[:2]
                     noise_label, _ = torch.split(model_output_label, C, dim=1)
@@ -318,7 +245,6 @@ def main_var(args):
     all_noise = all_noise.to(device)
 
     batch_size = args.ipc
-    # imagenet_train_path = '/data/wanghaoxuan/RDED/syn_data/100-ipc10-resnet18-imagenet'
 
     for c in tqdm(range(len(sel_classes))):
         model.eval()
@@ -401,17 +327,8 @@ def main_var(args):
             save_sample = vae.decode(latent_ / 0.18215).sample
             # Save and display images:
             save_image(save_sample, os.path.join(args.save_dir, sel_class, f"{img_idx}.png"), normalize=True, value_range=(-1, 1))
-            # my_save(save_sample[0], os.path.join(args.save_dir, sel_class, f"{img_idx}.png"), for_selector=False)
-
+           
         torch.cuda.empty_cache()
-
-def my_save(images, save_path, for_selector=False):
-    image_np = images.data.cpu().numpy().transpose((1, 2, 0))
-    if not for_selector:
-        image_np = (image_np + 1) / 2 
-        image_np = np.clip(image_np, 0, 1)
-    pil_image = Image.fromarray((image_np * 255).astype(np.uint8))
-    pil_image.save(save_path)
 
 
 if __name__ == "__main__":
@@ -438,5 +355,5 @@ if __name__ == "__main__":
     parser.add_argument('--n_trials', type=int, default=1, help='Number of trials per timestep')
     args = parser.parse_args()
 
-    # main(args)
-    main_var(args)
+    main(args)
+    # main_var(args)
