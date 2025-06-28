@@ -19,43 +19,6 @@ from PIL import Image
 import sys
 import random
 
-class BufferDataset(Dataset):
-    def __init__(self, directory, transform=None):
-        """
-        Args:
-            directory (string): Directory path to the images.
-            transform (callable, optional): Optional transform to be applied on a sample.
-        """
-        self.directory = directory
-        self.transform = transform
-        self.image_paths = sorted([os.path.join(directory, fname) for fname in os.listdir(directory)],
-                                  key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
-
-    def __len__(self):
-        return len(self.image_paths)
-
-    def __getitem__(self, idx):
-        img_path = self.image_paths[idx]
-        image = Image.open(img_path).convert('RGB')
-        if self.transform:
-            image = self.transform(image)
-
-        return image
-
-def mean_flat(tensor):
-    """
-    Take the mean over all non-batch dimensions.
-    """
-    return tensor.mean(dim=list(range(1, len(tensor.shape))))
-
-def el2n_score(pred, y):
-    with torch.no_grad():
-        pred = F.softmax(pred, dim=1)
-        l2_loss = torch.nn.MSELoss(reduction='none')
-        y_hot = F.one_hot(y, num_classes=pred.shape[1])
-        el2n = torch.sqrt(l2_loss(y_hot, pred).sum(dim=1))
-    return el2n.cpu().numpy()
-
 def main(args):
     # Setup PyTorch:
     torch.manual_seed(args.seed)
@@ -149,18 +112,6 @@ def main(args):
         samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
         init_samples = vae.decode(samples / 0.18215).sample
 
-        # # Get the correct samples
-        # prob = F.softmax(model_teacher(transform_size(init_samples)), dim=1)
-        # pred = torch.argmax(prob, dim=1)
-        # correct_indices = torch.where(pred == class_label)[0][:batch_size]
-        # samples = samples[correct_indices]
-        # init_samples = init_samples[correct_indices]
-        # # Get the most confident samples
-        # prob = F.softmax(model_teacher(transform_size(init_samples)), dim=1)
-        # confidence = torch.max(prob, dim=1).values
-        # confident_indices = torch.argsort(confidence, descending=True)[:batch_size]
-        # samples = samples[confident_indices]
-        # init_samples = init_samples[confident_indices]
         # Get the correct and most confident samples
         prob = F.softmax(model_teacher(transform_size(init_samples)), dim=1)
         pred = torch.argmax(prob, dim=1)
@@ -197,16 +148,9 @@ def main(args):
                     # predicted_noise = pipe.unet(latents, timestep, encoder_hidden_states=text_embeddings)["sample"]
                     noised_latent = diffusion.q_sample(latent_.repeat(train_size, 1, 1, 1), batch_ts, noise)
                     ## True class label
-                    uncond_input_label = torch.tensor([class_label] * len(batch_ts), device=device)
+                    # uncond_input_label = torch.tensor([class_label] * len(batch_ts), device=device)
                     ## Null class label
-                    # uncond_input_label = torch.tensor([1000] * len(batch_ts), device=device)
-                    ## Random class label
-                    # uncond_input_label = torch.tensor([random.randint(0, 999)] * len(batch_ts), device=device)
-                    ## Conditional class label
-                    # if float(correct_indices.shape[0]) / new_batch_size > 0.8:
-                    #     uncond_input_label = torch.tensor([1000] * len(batch_ts), device=device)
-                    # else:
-                    #     uncond_input_label = torch.tensor([class_label] * len(batch_ts), device=device)
+                    uncond_input_label = torch.tensor([1000] * len(batch_ts), device=device)
 
                     model_output_label = model(noised_latent, batch_ts, y=uncond_input_label)
                     B, C = noised_latent.shape[:2]
@@ -224,144 +168,6 @@ def main(args):
             save_image(save_sample, os.path.join(args.save_dir, sel_class, f"{img_idx}.png"), normalize=True, value_range=(-1, 1))
 
         torch.cuda.empty_cache()
-
-
-def main_var(args):
-    # Setup PyTorch:
-    torch.manual_seed(args.seed)
-    torch.set_grad_enabled(False)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    transform_size = transforms.Compose([transforms.Resize((224, 224))])
-
-    # Labels to condition the model
-    with open('./misc/class_indices.txt', 'r') as fp:
-        all_classes = fp.readlines()
-    all_classes = [class_index.strip() for class_index in all_classes]
-    if args.spec == 'woof':
-        file_list = './misc/class_woof.txt'
-    elif args.spec == 'nette':
-        file_list = './misc/class_nette.txt'
-    elif args.spec == 'imagenet100':
-        file_list = './misc/class100.txt'
-    else:
-        file_list = './misc/class_indices.txt'
-    with open(file_list, 'r') as fp:
-        sel_classes = fp.readlines()
-
-    phase = max(0, args.phase)
-    cls_from = args.nclass * phase
-    cls_to = args.nclass * (phase + 1)
-    sel_classes = sel_classes[cls_from:cls_to]
-    sel_classes = [sel_class.strip() for sel_class in sel_classes]
-    class_labels = []
-    
-    for sel_class in sel_classes:
-        class_labels.append(all_classes.index(sel_class))
-
-    if args.ckpt is None:
-        assert args.model == "DiT-XL/2", "Only DiT-XL/2 models are available for auto-download."
-        assert args.image_size in [256, 512]
-        assert args.num_classes == 1000
-
-    # Load model:
-    latent_size = args.image_size // 8
-    model = DiT_models[args.model](
-        input_size=latent_size,
-        num_classes=args.num_classes
-    ).to(device)
-    # Auto-download a pre-trained model or load a custom DiT checkpoint from train.py:
-    ckpt_path = args.ckpt or f"DiT-XL-2-{args.image_size}x{args.image_size}.pt"
-    state_dict = find_model(ckpt_path)
-    model.load_state_dict(state_dict, strict=False)
-    model.eval()  # important!
-    diffusion = create_diffusion(str(args.num_sampling_steps))
-    vae = AutoencoderKL.from_pretrained(f"stabilityai/sd-vae-ft-{args.vae}").to(device)
-
-    model_teacher = torchvision.models.__dict__[args.arch_name](pretrained=True)
-    model_teacher = nn.DataParallel(model_teacher).cuda()
-    model_teacher.eval()
-    for p in model_teacher.parameters():
-        p.requires_grad = False
-
-    def save_noise():
-        latent_size = args.image_size // 8
-        torch.manual_seed(42)
-        all_noise = torch.randn(1024, 4, latent_size, latent_size)
-
-        fname = f'noise_{args.image_size}.pt'
-        if os.path.exists(fname):
-            print(f"Loading noise from existing file {fname}.")
-        else: 
-            torch.save(all_noise, fname)
-            print(f"Noise saved to {fname}.")
-    save_noise()
-    all_noise = torch.load(f'noise_{args.image_size}.pt')
-    all_noise = all_noise.to(device)
-
-    batch_size = 10
-
-    for idx in range(args.ipc):
-        print(f"IPC --- {idx}")
-        total_samples = None
-        model.eval()
-        for sel_class in sel_classes:
-            if not os.path.exists(os.path.join(args.save_dir, sel_class)):
-                os.makedirs(os.path.join(args.save_dir, sel_class), exist_ok=True)
-        for i in range(int(len(sel_classes)/batch_size)):
-            class_label = class_labels[i*batch_size:(i+1)*batch_size]
-            z = torch.randn(batch_size, 4, latent_size, latent_size, device=device)
-            y = torch.tensor(class_label, device=device)
-            z = torch.cat([z, z], 0)
-            y_null = torch.tensor([1000] * batch_size, device=device)
-            y = torch.cat([y, y_null], 0)
-            model_kwargs = dict(y=y, cfg_scale=args.cfg_scale)
-            samples = diffusion.p_sample_loop(
-                model.forward_with_cfg, z.shape, z, clip_denoised=False, model_kwargs=model_kwargs, progress=False, device=device
-            )
-            samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
-            init_samples = vae.decode(samples / 0.18215).sample
-            # Save and display images
-            for image_index, image in enumerate(init_samples):
-                save_image(image, os.path.join(args.save_dir, sel_classes[i*batch_size+image_index], f"{idx}.png"), normalize=True, value_range=(-1, 1))
-            if total_samples is None:
-                total_samples = samples
-            else:
-                total_samples = torch.cat([total_samples, samples], 0)
-        
-        model.train()
-        ts = range(1, args.num_sampling_steps)
-        train_size = 1 # Need to be fixed
-        # Setting class label as predicted by teacher model
-        with torch.enable_grad():
-            noise = all_noise[np.random.choice(np.arange(all_noise.size(0)), train_size)]
-            batch_ts = torch.tensor(np.random.choice(ts, train_size), device=device)
-            for img_idx in tqdm(range(total_samples.shape[0])):
-                latent_ = total_samples[img_idx].detach().clone().unsqueeze(0)
-                latent_ = torch.nn.Parameter(latent_, requires_grad=True)
-                optimizer = torch.optim.Adam([latent_], lr=1e-3)
-                for _ in range(100):
-                    optimizer.zero_grad()
-                    noised_latent = diffusion.q_sample(latent_.repeat(train_size, 1, 1, 1), batch_ts, noise)
-                    ## True class label
-                    # cond_input_label = torch.tensor([class_labels[img_idx]], device=device)
-                    ## Null class label
-                    cond_input_label = torch.tensor([1000] * len(batch_ts), device=device)
-
-                    model_output_label = model(noised_latent, batch_ts, y=cond_input_label)
-                    B, C = noised_latent.shape[:2]
-                    noise_label, _ = torch.split(model_output_label, C, dim=1)
-                    error = F.mse_loss(noise, noise_label, reduction='none').mean(dim=(0, 1, 2, 3))
-                    error.backward()
-                    optimizer.step()
-
-                latent_ = latent_.detach().data
-                samples = vae.decode(latent_ / 0.18215).sample
-                # Save and display images:
-                if not os.path.exists(os.path.join(args.save_dir+"_opt", sel_classes[img_idx])):
-                    os.makedirs(os.path.join(args.save_dir+"_opt", sel_classes[img_idx]), exist_ok=True)
-                save_image(samples, os.path.join(args.save_dir+"_opt", sel_classes[img_idx], f"{idx}.png"), normalize=True, value_range=(-1, 1))
-            
-            torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
@@ -389,3 +195,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args)
+    
