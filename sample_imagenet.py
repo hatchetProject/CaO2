@@ -145,7 +145,6 @@ def main(args):
                 for _ in range(100):
                     optimizer.zero_grad()
                     batch_ts = torch.tensor(np.random.choice(ts, train_size), device=device)
-                    # predicted_noise = pipe.unet(latents, timestep, encoder_hidden_states=text_embeddings)["sample"]
                     noised_latent = diffusion.q_sample(latent_.repeat(train_size, 1, 1, 1), batch_ts, noise)
                     ## True class label
                     # uncond_input_label = torch.tensor([class_label] * len(batch_ts), device=device)
