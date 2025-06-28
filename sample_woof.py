@@ -20,15 +20,6 @@ import sys
 import random
 
 
-def el2n_score(pred, y):
-    with torch.no_grad():
-        pred = F.softmax(pred, dim=1)
-        l2_loss = torch.nn.MSELoss(reduction='none')
-        y_hot = F.one_hot(y, num_classes=pred.shape[1])
-        el2n = torch.sqrt(l2_loss(y_hot, pred).sum(dim=1))
-    return el2n.cpu().numpy()
-
-
 def main(args):
     # Setup PyTorch:
     torch.manual_seed(args.seed)
