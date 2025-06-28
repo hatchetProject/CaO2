@@ -98,7 +98,7 @@ def main(args):
         class_label, sel_class = class_labels[c], sel_classes[c]
         os.makedirs(os.path.join(args.save_dir, sel_class), exist_ok=True)
 
-        new_batch_size = batch_size
+        new_batch_size = batch_size * 2
         # Create sampling noise:
         z = torch.randn(new_batch_size, 4, latent_size, latent_size, device=device)
         y = torch.tensor([class_label] * new_batch_size, device=device)
@@ -114,29 +114,17 @@ def main(args):
         samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
         init_samples = vae.decode(samples / 0.18215).sample
 
-        # Get the correct samples
-        # prob = F.softmax(model_teacher(transform_size(init_samples)), dim=1)
-        # pred = torch.argmax(prob, dim=1)
-        # correct_indices = torch.where(pred == class_label)[0][:batch_size]
-        # samples = samples[correct_indices]
-
-        # # Get the easiest samples
-        # outputs = model_teacher(transform_size(init_samples))
-        # el2n_scores = el2n_score(outputs, torch.tensor([class_label] * new_batch_size, device=device).long())
-        # easy_indices = np.argsort(el2n_scores)[:batch_size]
-        # samples = samples[easy_indices]
-
         # Get the correct and most confident samples for smaller IPC (10)
         # Get the correct and least confident samples for larger IPC (50)
-        # prob = F.softmax(model_teacher(transform_size(init_samples)), dim=1)
-        # pred = torch.argmax(prob, dim=1)
-        # correct_indices = torch.where(pred == class_label)[0]
-        # confidence = torch.max(prob, dim=1).values
-        # confident_indices = torch.argsort(confidence, descending=True)  # ADJUSTABLE
-        # result_indices = torch.tensor([x for x in confident_indices if x in correct_indices])[:batch_size]
-        # if len(result_indices) < batch_size:
-        #     result_indices = torch.cat([result_indices, torch.tensor([x for x in confident_indices if x not in correct_indices])[:batch_size-len(result_indices)]]).long()
-        # samples = samples[result_indices]
+        prob = F.softmax(model_teacher(transform_size(init_samples)), dim=1)
+        pred = torch.argmax(prob, dim=1)
+        correct_indices = torch.where(pred == class_label)[0]
+        confidence = torch.max(prob, dim=1).values
+        confident_indices = torch.argsort(confidence, descending=True)  # ADJUSTABLE
+        result_indices = torch.tensor([x for x in confident_indices if x in correct_indices])[:batch_size]
+        if len(result_indices) < batch_size:
+            result_indices = torch.cat([result_indices, torch.tensor([x for x in confident_indices if x not in correct_indices])[:batch_size-len(result_indices)]]).long()
+        samples = samples[result_indices]
 
         if not os.path.exists(os.path.join(args.save_dir, sel_class)):
             os.makedirs(os.path.join(args.save_dir, sel_class), exist_ok=True)
@@ -146,8 +134,6 @@ def main(args):
         train_size = 1
 
         lambda_linf = 10.0 # ADJUSTABLE
-        # lambda_l1 = 0 # ADJUSTABLE
-        # lambda_l2 = 0.01 # ADJUSTABLE
         for img_idx, x0 in enumerate(samples):
             # Setting class label as predicted by teacher model
             with torch.enable_grad():
@@ -162,10 +148,6 @@ def main(args):
                     
                     ## True class label
                     uncond_input_label = torch.tensor([class_label] * len(batch_ts), device=device)
-                    ## Null class label
-                    # uncond_input_label = torch.tensor([1000] * len(batch_ts), device=device)
-                    ## Random class label
-                    # uncond_input_label = torch.tensor([random.randint(0, 999)] * len(batch_ts), device=device)
 
                     model_output_label = model(noised_latent, batch_ts, y=uncond_input_label)
                     B, C = noised_latent.shape[:2]
@@ -173,12 +155,8 @@ def main(args):
                     mse_error = F.mse_loss(noise, noise_label, reduction='none').mean(dim=(0, 1, 2, 3))
 
                     linf_norm = torch.max(torch.abs(noise - noise_label))
-                    # l1_norm = torch.sum(torch.abs(noise - noise_label))
-                    # l2_norm = torch.sqrt(torch.sum((noise - noise_label) ** 2))
 
                     loss = mse_error + lambda_linf * linf_norm
-                    # loss = mse_error + lambda_l1 * l1_norm
-                    # loss = mse_error + lambda_l2 * l2_norm
                     loss.backward()
                     optimizer.step()
 
