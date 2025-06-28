@@ -32,5 +32,5 @@ python main_validate.py --subset "SPEC" --arch-name "resnet18" --factor 2 \
 
 
 # Regular evaluation, this example evaluates on resnet18
-python train.py -d imagenet --imagenet_dir results/SPEC_IPC $IMAGENET_PATH \
+python eval.py -d imagenet --imagenet_dir results/SPEC_IPC $IMAGENET_PATH \
      -n resnet --depth 18 --nclass N_CLASS --norm_type instance --ipc IPC --tag test --slct_type random --spec SPEC --repeat 3
