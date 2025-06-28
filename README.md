@@ -4,6 +4,10 @@ Official repository for "Rectifying Inconsistencies in Diffusion-Based Dataset D
 # Update Log
 **(2025.6.26)** Starting to update code.
 
+# TODO
+- [ ] Complete the code upload
+- [ ] Upload the distilled datasets
+
 # Preparation
 ## Dataset
 Download the [ImageNet](https://image-net.org/download) dataset, and place it at your intended IMAGENET_PATH.
@@ -20,4 +24,5 @@ Download the pretrained [DiT model ((DiT/XL 256×256))](https://dl.fbaipublicfil
 
 Download the pretrained classification models for RDED evaluation from [RDED](https://github.com/LINs-lab/RDED?tab=readme-ov-file) and place them in ``data/pretrain_models``. We also provide the script for running evaluation without teacher supervision.
 
-## Usage
+# Usage
+We provided an example script in ``run.sh`` for the users to run the code. Note that the users will need to modify the variables in the script for it to run properly.
