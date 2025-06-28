@@ -99,7 +99,7 @@ def main(args):
         class_label, sel_class = class_labels[c], sel_classes[c]
         os.makedirs(os.path.join(args.save_dir, sel_class), exist_ok=True)
 
-        new_batch_size = batch_size * 2
+        new_batch_size = batch_size * 4
         # Create sampling noise:
         z = torch.randn(new_batch_size, 4, latent_size, latent_size, device=device)
         y = torch.tensor([class_label] * new_batch_size, device=device)
