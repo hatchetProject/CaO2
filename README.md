@@ -21,7 +21,9 @@ Download the pretrained [DiT model (DiT/XL 256×256)](https://dl.fbaipublicfiles
 Download the pretrained classification models for RDED evaluation from [RDED](https://github.com/LINs-lab/RDED) and place them in ``data/pretrain_models``. We also provide the script for running evaluation without teacher supervision.
 
 # Usage
-We provided an example script in ``run.sh`` for the users to run the code. Note that the users will need to modify the variables in the script for it to run properly.
+We provided an example script in ``run.sh`` for the users to run the code. Note that the users will need to modify the variables in the script for it to run properly. 
+
+To gain better performance, hyperparameters can be tuned, but the variations are usually marginal.
 
 # TODO
 - [ ] Complete the code upload
