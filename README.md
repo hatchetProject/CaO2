@@ -1,5 +1,5 @@
 # CaO<sub>2</sub>
-Official repository for "Rectifying Inconsistencies in Diffusion-Based Dataset Distillation". 
+Official repository for [CaO<sub>2</sub>: Rectifying Inconsistencies in Diffusion-Based Dataset Distillation](https://arxiv.org/abs/2506.22637v1). 
 
 # Update Log
 **(2025.6.26)** Starting to update the repository.
@@ -34,3 +34,14 @@ Thanks to these amazing repositories: [Minimax Diffusion](https://github.com/vim
 
 # Citation
 If you find this work useful, please consider citing:
+```
+@misc{wang2025cao2rectifyinginconsistenciesdiffusionbased,
+      title={CaO$_2$: Rectifying Inconsistencies in Diffusion-Based Dataset Distillation}, 
+      author={Haoxuan Wang and Zhenghao Zhao and Junyi Wu and Yuzhang Shang and Gaowen Liu and Yan Yan},
+      year={2025},
+      eprint={2506.22637},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2506.22637}, 
+}
+```
