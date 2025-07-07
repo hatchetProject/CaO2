@@ -28,7 +28,7 @@ We provided an example script in ``run.sh`` for the users to run the code. Note 
 To gain better performance, hyperparameters can be tuned, but the variations are usually marginal.
 
 # Distilled Datasets
-For simple evaluation, the distilled datasets are uploaded [here](https://drive.google.com/file/d/1Nyk67RrjPirnjaInxLuID4csb5teN4eD/view?usp=sharing) (>7GB).
+For direct evaluation and benchmarking, the distilled datasets are uploaded [here](https://drive.google.com/file/d/1Nyk67RrjPirnjaInxLuID4csb5teN4eD/view?usp=sharing) (>7GB).
 
 # TODO
 - [x] Complete the code upload
