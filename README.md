@@ -2,6 +2,7 @@
 Official repository for [CaO<sub>2</sub>: Rectifying Inconsistencies in Diffusion-Based Dataset Distillation](https://arxiv.org/abs/2506.22637v1). 
 
 # Update Log
+**(2025.7.7)** Upload distilled datasets.
 **(2025.6.26)** Starting to update the repository.
 
 # Preparation
@@ -25,9 +26,13 @@ We provided an example script in ``run.sh`` for the users to run the code. Note 
 
 To gain better performance, hyperparameters can be tuned, but the variations are usually marginal.
 
+# Distilled Datasets
+For simple evaluation, the distilled datasets are uploaded [here](https://drive.google.com/file/d/1Nyk67RrjPirnjaInxLuID4csb5teN4eD/view?usp=sharing) 
+
 # TODO
-- [ ] Complete the code upload
-- [ ] Upload the distilled datasets
+- [x] Complete the code upload
+- [x] Upload the distilled datasets
+- [ ] Update code for MAR distillation
 
 # Acknowledgements
 Thanks to these amazing repositories: [Minimax Diffusion](https://github.com/vimar-gu/MinimaxDiffusion), [RDED](https://github.com/LINs-lab/RDED) and many other inspiring works.
