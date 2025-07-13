@@ -446,27 +446,9 @@ class MAR(nn.Module):
                 sampled_token_latent, _ = sampled_token_latent.chunk(2, dim=0)  # Remove null class samples
                 mask_to_pred, _ = mask_to_pred.chunk(2, dim=0)
 
-            # if 16 < step <= 18:
-            #     cur_tokens[mask_to_pred.nonzero(as_tuple=True)] = torch.zeros_like(sampled_token_latent)
-            #     random_indices = np.random.randint(step-2, step, size=bsz)
-            #     idx = orders[np.arange(bsz), random_indices]
-            #     cur_tokens[mask_to_pred.nonzero(as_tuple=True)] = tokens[torch.arange(bsz), idx, :]
-            # else:
             cur_tokens[mask_to_pred.nonzero(as_tuple=True)] = sampled_token_latent
             tokens = cur_tokens.clone() # [bsz, 256, 16]
 
-            # if step > 29:
-            #     left_orders = orders[:, (self.seq_len // num_iter) * step:]
-            #     # left_tokens = tokens[torch.arange(bsz)[:, None], left_orders].cuda()
-            #     break
-
-        # discard_indices, retain_indices = diversity_loss(tokens, n=16)
-        # tokens[torch.arange(bsz)[:, None], retain_indices] = 0
-        # tokens[torch.arange(bsz)[:, None], discard_indices] = tokens[torch.arange(bsz)[:, None], retain_indices]
-        # for b in range(bsz):
-        #     tokens[b, bs_list[b]] = torch.zeros(len(bs_list[b]), self.token_embed_dim).cuda()
-        # unpatchify
-        # tokens = self.unpatchify(tokens) # [bsz, 16, 16, 16]
         return tokens
 
 
