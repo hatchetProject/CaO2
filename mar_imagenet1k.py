@@ -99,34 +99,6 @@ def get_classwise_images(args, model_teacher, hook_for_display, model, vae):
         targets = torch.Tensor([class_label] * batch_size).long().cuda()
         with torch.no_grad():
             with torch.cuda.amp.autocast():
-                ## Original sampling
-                # sampled_tokens = model.sample_tokens(bsz=ipc, num_iter=args.num_iter, cfg=args.cfg,
-                #                                     cfg_schedule=args.cfg_schedule, labels=targets,
-                #                                     temperature=args.temperature) # [10, 256, 16]
-                # # Sampling with correctness
-                # sampled_tokens = model.sample_tokens(bsz=batch_size, num_iter=args.num_iter, cfg=args.cfg,
-                #                                     cfg_schedule=args.cfg_schedule, labels=targets,
-                #                                     temperature=args.temperature) # [10, 256, 16]
-                # sampled_images = model.unpatchify(sampled_tokens)
-                # sampled_images = vae.decode(sampled_images / 0.2325)
-                # outputs = model_teacher(transform_size(sampled_images))
-
-                # correct_tokens = sampled_tokens[torch.argmax(outputs, dim=1) == targets]
-                # wrong_tokens = sampled_tokens[torch.argmax(outputs, dim=1) != targets]
-                # if correct_tokens.shape[0] >= ipc:
-                #     sampled_tokens = correct_tokens[:ipc]
-                # else:
-                #     sampled_tokens = torch.cat([correct_tokens, wrong_tokens[:ipc - correct_tokens.shape[0]]], dim=0)
-                ## Sampling with sample hardness
-                # sampled_tokens = model.sample_tokens(bsz=batch_size, num_iter=args.num_iter, cfg=args.cfg,
-                #                                     cfg_schedule=args.cfg_schedule, labels=targets,
-                #                                     temperature=args.temperature) # [10, 256, 16]
-                # sampled_images = model.unpatchify(sampled_tokens)
-                # sampled_images = vae.decode(sampled_images / 0.2325)
-                # outputs = model_teacher(transform_size(sampled_images))
-                # el2n_scores = el2n_score(outputs, targets)
-                # easy_indices = np.argsort(el2n_scores)[:ipc]
-                # sampled_tokens = sampled_tokens[easy_indices]
                 ## Sample with step similarity
                 start_step = args.num_iter - 2
                 end_step = args.num_iter - 1
@@ -166,14 +138,9 @@ def get_classwise_images(args, model_teacher, hook_for_display, model, vae):
                 optimizer = torch.optim.Adam([latent_], lr=6e-4)
                 for _ in range(100):
                     optimizer.zero_grad()
-                    # Guide with true labels
-                    # class_embedding = model.class_emb(targets[img_idx].unsqueeze(0))
                     # Guide with zero class embedding
                     labels = torch.zeros(1, 1000).cuda()
                     class_embedding = model.embed_linear(labels)
-                    # # Guide with average class embedding
-                    # labels = torch.ones(1, 1000).cuda().float() / 1000.
-                    # class_embedding = model.embed_linear(labels)
 
                     gt_latents = latent_.clone().detach()
                     orders = model.sample_orders(bsz=latent_.size(0))
