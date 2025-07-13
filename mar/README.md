@@ -3,3 +3,6 @@ Official repository for [CaO<sub>2</sub>: Rectifying Inconsistencies in Diffusio
 
 # Update Log
 The code for MAR-based distillation is uploaded.
+
+# Usage
+Similar to the DiT version. Download the pretrained weights as in the [MAR repository](https://github.com/LTH14/mar).
