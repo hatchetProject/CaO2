@@ -33,7 +33,7 @@ For direct evaluation and benchmarking, the distilled datasets are uploaded [her
 # TODO
 - [x] Complete the code upload
 - [x] Upload the distilled datasets
-- [ ] Update code for MAR distillation
+- [x] Update code for MAR distillation
 
 # Acknowledgements
 Thanks to these amazing repositories: [Minimax Diffusion](https://github.com/vimar-gu/MinimaxDiffusion), [RDED](https://github.com/LINs-lab/RDED) and many other inspiring works.
