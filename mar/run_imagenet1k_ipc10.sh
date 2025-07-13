@@ -6,7 +6,7 @@ IMAGENET_TRAIN_PATH=your path
 IMAGENET_VAL_PATH=your path
 
 # Recover MAR-Base
-python robust_imagenet1k.py --arch-name "resnet18" --spec imagenet-1k --exp-name "1k_rn18_ipc10" \
+python mar_imagenet1k.py --arch-name "resnet18" --spec imagenet-1k --exp-name "1k_rn18_ipc10" \
     --syn-data-path 'results' --batch-size 10 --lr 0.001 --r-bn 0.01 --iteration 0 \
     --store-best-images --easy2hard-mode "cosine" --milestone 1 --ipc-start 0 --ipc-end 10 \
     --model mar_base --resume pretrained_models/mar/mar_base --diffloss_d 6 --diffloss_w 1024 \
