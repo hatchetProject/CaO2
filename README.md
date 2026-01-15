@@ -20,7 +20,7 @@ conda activate cao2
 
 Download the pretrained [DiT model (DiT/XL 256×256)](https://dl.fbaipublicfiles.com/DiT/models/DiT-XL-2-256x256.pt), and place it in ``pretrained_models``.
 
-Download the pretrained classification models for RDED evaluation from [RDED](https://github.com/LINs-lab/RDED) and place them in ``data/pretrain_models``. We also provide the script for running evaluation without teacher supervision in ``eval.py``.
+Download the pretrained classification models for RDED evaluation from [RDED](https://github.com/LINs-lab/RDED) and place them in ``data/pretrain_models``. We also supplement the pretrained models (ResNet50 and ResNet101 for Nette) [here](https://drive.google.com/file/d/1TSI6VemPz3337qV0Cbre6pZhNnM-SvvL/view?usp=sharing). The script for running evaluation without teacher supervision is in ``eval.py``. Though more reasonable, its performance is inferior to those that use teacher-student training.
 
 # Usage
 We provided an example script in ``run.sh`` for the users to run the code. Note that the users will need to modify the variables in the script for it to run properly. 
